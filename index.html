@@ -1,86 +1,251 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>State Press Optimizer | Live</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .maroon-bg { background-color: #8C1D40; }
-        .maroon-text { color: #8C1D40; }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState } = React;
-        const App = () => {
-            const [headline, setHeadline] = useState('');
-            const [body, setBody] = useState('');
-            const [isAnalyzing, setIsAnalyzing] = useState(false);
-            const [analysis, setAnalysis] = useState(null);
+import React, { useState, useEffect } from 'react';
+import { 
+  BarChart, 
+  CheckCircle, 
+  AlertCircle, 
+  Zap, 
+  TrendingUp, 
+  Layout, 
+  MessageSquare,
+  FileText,
+  MousePointer2,
+  Clock,
+  Download,
+  Check,
+  Info
+} from 'lucide-react';
 
-            const performAnalysis = async () => {
-                setIsAnalyzing(true);
-                // Simulation for GitHub environment
-                setTimeout(() => {
-                    setAnalysis({
-                        score: 85,
-                        local: true,
-                        optimized: "How ASU Students are Navigating 2026 Campus Changes",
-                        tips: ["Add a local map", "Include a 'How to' sidebar"]
-                    });
-                    setIsAnalyzing(false);
-                }, 1500);
-            };
+const apiKey = ""; // Environment handles this
 
-            return (
-                <div className="min-h-screen pb-20">
-                    <nav className="bg-white border-b p-4 mb-8">
-                        <div className="max-w-4xl mx-auto flex justify-between items-center">
-                            <h1 className="text-xl font-black maroon-text">STATE PRESS OPTIMIZER</h1>
-                            <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">LIVE ON GITHUB</span>
-                        </div>
-                    </nav>
-                    <main className="max-w-4xl mx-auto px-4 grid md:grid-cols-2 gap-8">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Headline</label>
-                            <input className="w-full border-b-2 mb-6 p-2 outline-none focus:border-yellow-500" value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Draft headline..." />
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Body Text</label>
-                            <textarea className="w-full h-40 bg-slate-50 p-4 rounded-xl outline-none" value={body} onChange={e => setBody(e.target.value)} placeholder="Paste story..." />
-                            <button onClick={performAnalysis} className="w-full mt-4 maroon-bg text-white font-bold py-4 rounded-xl">
-                                {isAnalyzing ? "Analyzing..." : "Analyze Engagement"}
-                            </button>
-                        </div>
-                        <div>
-                            {analysis ? (
-                                <div className="bg-white p-6 rounded-2xl border">
-                                    <div className="text-6xl font-black maroon-text mb-2">{analysis.score}</div>
-                                    <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest">Engagement Score</p>
-                                    <h3 className="font-bold text-slate-800 mb-2">Suggested Headline:</h3>
-                                    <p className="italic text-slate-600 mb-6">"{analysis.optimized}"</p>
-                                    <h3 className="font-bold text-slate-800 mb-2">Retention Tips:</h3>
-                                    <ul className="list-disc ml-5 text-sm text-slate-600">
-                                        {analysis.tips.map((t, i) => <li key={i}>{t}</li>)}
-                                    </ul>
-                                </div>
-                            ) : (
-                                <div className="border-4 border-dashed rounded-2xl h-full flex items-center justify-center text-slate-300 font-bold p-8 text-center">
-                                    Results will appear here after analysis.
-                                </div>
-                            )}
-                        </div>
-                    </main>
+const App = () => {
+  const [headline, setHeadline] = useState('');
+  const [body, setBody] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const performAnalysis = async () => {
+    if (!headline && !body) return;
+    setIsAnalyzing(true);
+    setError(null);
+
+    const prompt = `
+      Analyze the following student newspaper content for engagement optimization based on "The State Press 2025 Strategy".
+      
+      Strategy Context:
+      - Mandatory Local Signals: Headers must mention ASU, Tempe, Phoenix, Sun Devils, etc.
+      - Service Journalism: Does it provide utility (guides, explainers)?
+      - Stickiness: Does it suggest interactive elements (data, polls, carousels)?
+      - Goal: Increase time on page from 0:05 to 1:00.
+
+      Content to Analyze:
+      Headline: ${headline}
+      Body: ${body}
+
+      Provide a JSON response with:
+      1. score (0-100)
+      2. localSignalCheck (boolean)
+      3. feedback (array of specific tips)
+      4. optimizedHeadline (a better version of the input headline)
+      5. stickinessIdeas (array of 2-3 interactive ideas)
+    `;
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to reach analysis engine.');
+      
+      const data = await response.json();
+      const result = JSON.parse(data.candidates[0].content.parts[0].text);
+      setAnalysis(result);
+    } catch (err) {
+      setError("Analysis failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const downloadStandalone = () => {
+    setDownloading(true);
+    // Get the current source code of the page (roughly)
+    const htmlContent = document.documentElement.outerHTML;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'State_Press_Optimizer.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => setDownloading(false), 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
+      {/* Header */}
+      <header className="max-w-5xl mx-auto flex items-center justify-between mb-8 border-b border-slate-200 pb-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-[#8C1D40] flex items-center gap-2">
+            <TrendingUp size={32} />
+            STATE PRESS <span className="text-slate-400 font-light">OPTIMIZER</span>
+          </h1>
+          <p className="text-slate-500 mt-1">2025 Engagement Strategy Compliance Tool</p>
+        </div>
+        <div className="flex gap-4 items-center">
+          <button 
+            onClick={downloadStandalone}
+            title="Download as a standalone HTML file for the team"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            {downloading ? <Check size={16} className="text-green-500" /> : <Download size={16} />}
+            {downloading ? 'Downloaded!' : 'Export for Team'}
+          </button>
+        </div>
+      </header>
+
+      {/* Sharing Info Banner */}
+      <div className="max-w-5xl mx-auto mb-8 bg-blue-50 border border-blue-200 p-4 rounded-xl flex gap-3 items-start">
+        <Info className="text-blue-500 shrink-0 mt-0.5" size={20} />
+        <p className="text-sm text-blue-800">
+          <strong>How to share:</strong> Click <strong>"Export for Team"</strong> above to download this tool as an HTML file. You can then email that file to your reporters or upload it to Slack. They just need to open it in their browser to start optimizing.
+        </p>
+      </div>
+
+      <main className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Editor Side */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <label className="block text-sm font-bold text-slate-700 uppercase mb-2 flex items-center gap-2">
+              <FileText size={16} className="text-[#8C1D40]" />
+              Working Headline
+            </label>
+            <input 
+              type="text"
+              placeholder="Enter draft headline..."
+              className="w-full text-xl font-bold p-3 border-b-2 border-slate-100 focus:border-[#8C1D40] outline-none transition-colors"
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+            />
+
+            <label className="block text-sm font-bold text-slate-700 uppercase mt-6 mb-2 flex items-center gap-2">
+              <Layout size={16} className="text-[#8C1D40]" />
+              Story Draft (Optional)
+            </label>
+            <textarea 
+              placeholder="Paste story text to analyze stickiness and utility..."
+              className="w-full h-64 p-3 bg-slate-50 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#8C1D40] outline-none transition-all resize-none"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+
+            <button 
+              onClick={performAnalysis}
+              disabled={isAnalyzing || !headline}
+              className={`w-full mt-6 py-4 rounded-lg font-bold text-white transition-all flex items-center justify-center gap-2 ${
+                isAnalyzing ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#8C1D40] hover:bg-[#701733] shadow-lg hover:shadow-xl active:scale-[0.98]'
+              }`}
+            >
+              {isAnalyzing ? 'Analyzing Strategy...' : 'Optimize Content'}
+              <Zap size={18} fill="currentColor" />
+            </button>
+            {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+          </div>
+        </div>
+
+        {/* Results Side */}
+        <div className="lg:col-span-5 space-y-6">
+          {!analysis && !isAnalyzing ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300">
+              <MousePointer2 size={48} className="text-slate-300 mb-4" />
+              <h3 className="text-lg font-bold text-slate-400">Ready for Analysis</h3>
+              <p className="text-slate-400 text-sm">Enter a headline or paste a story to evaluate alignment with 2025 goals.</p>
+            </div>
+          ) : isAnalyzing ? (
+            <div className="space-y-4 animate-pulse">
+              <div className="h-32 bg-slate-200 rounded-xl"></div>
+              <div className="h-64 bg-slate-200 rounded-xl"></div>
+            </div>
+          ) : (
+            <>
+              {/* Score Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-500 uppercase text-xs tracking-widest">Engagement Score</h3>
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${analysis.localSignalCheck ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {analysis.localSignalCheck ? 'LOCAL SIGNAL DETECTED' : 'MISSING LOCAL SIGNAL'}
+                  </span>
                 </div>
-            );
-        };
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                <div className="flex items-end gap-2">
+                  <span className="text-6xl font-black text-[#8C1D40]">{analysis.score}</span>
+                  <span className="text-2xl font-bold text-slate-300 mb-2">/100</span>
+                </div>
+                <div className="w-full bg-slate-100 h-3 mt-4 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#FFC627] transition-all duration-1000" 
+                    style={{ width: `${analysis.score}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Suggestions */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <CheckCircle size={18} className="text-green-500" />
+                  Editorial Improvements
+                </h3>
+                <div className="space-y-3">
+                  {analysis.feedback.map((tip, i) => (
+                    <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-lg text-sm border-l-4 border-[#8C1D40]">
+                      <AlertCircle size={16} className="shrink-0 text-[#8C1D40]" />
+                      {tip}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Optimized Headline</h4>
+                  <p className="p-3 bg-green-50 text-green-900 rounded-lg font-bold border border-green-100 italic">
+                    "{analysis.optimizedHeadline}"
+                  </p>
+                </div>
+              </div>
+
+              {/* Stickiness Factors */}
+              <div className="bg-[#8C1D40] rounded-xl shadow-lg p-6 text-white">
+                <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <Clock size={18} className="text-[#FFC627]" />
+                  Stickiness Boosters
+                </h3>
+                <ul className="space-y-4">
+                  {analysis.stickinessIdeas.map((idea, i) => (
+                    <li key={i} className="flex gap-3 text-sm bg-white/10 p-3 rounded-lg border border-white/5">
+                      <div className="bg-[#FFC627] text-[#8C1D40] rounded-full h-5 w-5 flex items-center justify-center font-bold text-xs shrink-0">
+                        {i + 1}
+                      </div>
+                      {idea}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
+      </main>
+
+      <footer className="max-w-5xl mx-auto mt-12 text-center text-slate-400 text-sm py-8 border-t border-slate-200">
+        <p>© 2025 The State Press Engagement Strategy Taskforce</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
