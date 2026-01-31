@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Press Optimizer | Live</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .maroon-bg { background-color: #8C1D40; }
+        .maroon-text { color: #8C1D40; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const App = () => {
+            const [headline, setHeadline] = useState('');
+            const [body, setBody] = useState('');
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+            const [analysis, setAnalysis] = useState(null);
+
+            const performAnalysis = async () => {
+                setIsAnalyzing(true);
+                // Simulation for GitHub environment
+                setTimeout(() => {
+                    setAnalysis({
+                        score: 85,
+                        local: true,
+                        optimized: "How ASU Students are Navigating 2026 Campus Changes",
+                        tips: ["Add a local map", "Include a 'How to' sidebar"]
+                    });
+                    setIsAnalyzing(false);
+                }, 1500);
+            };
+
+            return (
+                <div className="min-h-screen pb-20">
+                    <nav className="bg-white border-b p-4 mb-8">
+                        <div className="max-w-4xl mx-auto flex justify-between items-center">
+                            <h1 className="text-xl font-black maroon-text">STATE PRESS OPTIMIZER</h1>
+                            <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">LIVE ON GITHUB</span>
+                        </div>
+                    </nav>
+                    <main className="max-w-4xl mx-auto px-4 grid md:grid-cols-2 gap-8">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Headline</label>
+                            <input className="w-full border-b-2 mb-6 p-2 outline-none focus:border-yellow-500" value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Draft headline..." />
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Body Text</label>
+                            <textarea className="w-full h-40 bg-slate-50 p-4 rounded-xl outline-none" value={body} onChange={e => setBody(e.target.value)} placeholder="Paste story..." />
+                            <button onClick={performAnalysis} className="w-full mt-4 maroon-bg text-white font-bold py-4 rounded-xl">
+                                {isAnalyzing ? "Analyzing..." : "Analyze Engagement"}
+                            </button>
+                        </div>
+                        <div>
+                            {analysis ? (
+                                <div className="bg-white p-6 rounded-2xl border">
+                                    <div className="text-6xl font-black maroon-text mb-2">{analysis.score}</div>
+                                    <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest">Engagement Score</p>
+                                    <h3 className="font-bold text-slate-800 mb-2">Suggested Headline:</h3>
+                                    <p className="italic text-slate-600 mb-6">"{analysis.optimized}"</p>
+                                    <h3 className="font-bold text-slate-800 mb-2">Retention Tips:</h3>
+                                    <ul className="list-disc ml-5 text-sm text-slate-600">
+                                        {analysis.tips.map((t, i) => <li key={i}>{t}</li>)}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <div className="border-4 border-dashed rounded-2xl h-full flex items-center justify-center text-slate-300 font-bold p-8 text-center">
+                                    Results will appear here after analysis.
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
